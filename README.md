@@ -63,6 +63,8 @@ pip install -r requirements.txt
 pytest tests/
 ```
 
+Os testes da API e do lote treinam antes um XGBoost pequeno com dados sintéticos (`tests/conftest.py`). Esse modelo só confere o formato das respostas; ele não é o modelo avaliado acima.
+
 Recalcular as métricas do README a partir das previsões salvas:
 
 ```bash
@@ -78,7 +80,16 @@ docker run -p 8000:8000 aml-project
 curl http://localhost:8000/health
 ```
 
-A imagem não traz modelo treinado (`models/*.pkl` fica fora do git). Sem ele, `/health` responde `"model_loaded": false` e `/predict` devolve 503.
+A imagem não traz modelo treinado (`models/*.pkl` fica fora do git). Sem ele, `/health` responde `"model_loaded": false` e `/predict` devolve 503. Com um modelo em `models/model.pkl`:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 1500.0, "payment_format": 2, "hour": 14, "day_of_week": 3, "transaction_count": 5}'
+# resposta: {"prediction": 0 ou 1, "probability": entre 0 e 1, "risk_level": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"}
+```
+
+`amount` e `payment_format` são obrigatórios. Os outros campos, se faltarem, vão como vazios (NaN) para o modelo. `/predict/batch` recebe `{"transactions": [...]}` e devolve `{"predictions": [...]}`.
 
 Os dados brutos (`data/`) estão no Git LFS. Para clonar sem baixá-los:
 
