@@ -8,6 +8,24 @@ from src.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def align_features(X: pd.DataFrame, model) -> pd.DataFrame:
+    """
+    Keep only the columns the model was trained on, in training order.
+    Missing columns become NaN (XGBoost and LightGBM treat NaN as missing).
+
+    Args:
+        X: Features
+        model: Trained model
+
+    Returns:
+        Features aligned to the model
+    """
+    feature_names = getattr(model, 'feature_names_in_', None)
+    if feature_names is None:
+        return X
+    return X.reindex(columns=list(feature_names))
+
+
 def predict(X, model=None, return_proba: bool = True):
     """
     Make predictions.
@@ -24,6 +42,7 @@ def predict(X, model=None, return_proba: bool = True):
         model = load_model()
     
     logger.info(f"Predicting for {len(X)} samples")
+    X = align_features(X, model)
     
     if return_proba and hasattr(model, 'predict_proba'):
         return model.predict_proba(X)[:, 1]

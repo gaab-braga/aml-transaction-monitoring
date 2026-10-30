@@ -67,3 +67,31 @@ def config_dict():
             'test_size': 0.2
         }
     }
+
+
+@pytest.fixture(scope="session", autouse=True)
+def trained_model(tmp_path_factory):
+    """
+    Train a small model on synthetic data and point paths.model_output to it.
+    The API and batch tests need a model file; the repository does not ship one.
+    """
+    from src.config import config
+    from src.models.train import train_model, save_model
+
+    rng = np.random.default_rng(42)
+    n_samples = 1000
+    X = pd.DataFrame({
+        'amount': rng.exponential(100, n_samples),
+        'payment_format': rng.integers(0, 5, n_samples),
+        'hour': rng.integers(0, 24, n_samples),
+        'day_of_week': rng.integers(0, 7, n_samples),
+        'transaction_count': rng.poisson(10, n_samples),
+    })
+    y = rng.binomial(1, 0.1, n_samples)
+
+    model_path = tmp_path_factory.mktemp("model") / "model.pkl"
+    save_model(train_model(X, y), str(model_path))
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setitem(config._config['paths'], 'model_output', str(model_path))
+        yield model_path

@@ -52,7 +52,8 @@ def temporal_split(df: pd.DataFrame, target_col: str = None, test_size: float = 
     
     split_idx = int(len(df) * (1 - test_size))
     
-    X = df.drop(columns=[target_col])
+    # O timestamp só serve para ordenar; como feature, o modelo aprenderia a data
+    X = df.drop(columns=[target_col, 'timestamp'], errors='ignore')
     y = df[target_col]
     
     X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]

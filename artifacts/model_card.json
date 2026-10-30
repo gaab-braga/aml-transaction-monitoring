@@ -1,88 +1,60 @@
 {
   "model_overview": {
-    "name": "AML Detection System",
-    "version": "2.0",
-    "type": "Ensemble Classification Model",
-    "task": "Anti-Money Laundering Detection",
-    "dataset": "HI-Small (5M+ transactions)",
-    "frameworks": [
-      "XGBoost",
-      "LightGBM",
-      "RandomForest",
-      "Scikit-learn"
-    ],
-    "license": "Proprietary"
+    "name": "AML Detection - XGBoost",
+    "version": "2.1",
+    "type": "Classificador binário XGBoost (modelo único)",
+    "task": "Marcar transações com suspeita de lavagem de dinheiro",
+    "dataset": "IBM AML HI-Small, 5.078.336 transações (dados sintéticos)",
+    "license": "Apache-2.0"
   },
-  "model_details": {
-    "input_format": "Tabular data with 15+ engineered features",
-    "output_format": "Probability score [0,1] for fraud likelihood",
-    "model_architecture": {
-      "XGBoost": "Gradient boosting with optimized hyperparameters",
-      "LightGBM": "Light gradient boosting with early stopping",
-      "RandomForest": "Ensemble of 100 decision trees",
-      "Ensemble": "Voting classifier combining all three models"
-    },
-    "hyperparameters": {
-      "XGBoost": "max_depth=6, learning_rate=0.1, n_estimators=200",
-      "LightGBM": "num_leaves=31, learning_rate=0.1, n_estimators=150",
-      "RandomForest": "n_estimators=100, max_depth=10",
-      "Ensemble": "Voting classifier with soft voting"
-    }
+  "source_of_truth": {
+    "predictions": "artifacts/tabular_predictions.csv",
+    "metrics": "artifacts/competition_results.json (modelo XGBoost)",
+    "check": "python scripts/recompute_metrics.py recalcula as métricas a partir das previsões e compara com o JSON.",
+    "rule": "Todos os números deste model card e do README podem ser recalculados a partir das previsões salvas."
   },
-  "performance": {
-    "primary_metric": "PR-AUC (Precision-Recall Area Under Curve)",
-    "benchmark_comparison": {
-      "XGBoost": "PR-AUC = 0.5093 (vs GNN F1 = 0.0012)",
-      "LightGBM": "PR-AUC = 0.2028",
-      "RandomForest": "PR-AUC = 0.0709",
-      "Ensemble": "PR-AUC = 0.3060"
-    },
-    "robustness": {
-      "most_robust_model": "LightGBM",
-      "vulnerabilities_identified": 12,
-      "adversarial_resistance": "Medium (RandomForest most vulnerable)"
-    }
+  "data_split": {
+    "method": "temporal 80/20",
+    "description": "As transações mais antigas (80%) treinam o modelo; as mais recentes (20%) ficam para o teste.",
+    "train_size": 4062668,
+    "test_size": 1015668,
+    "test_positives": 1797,
+    "test_positive_rate": 0.0017692789376055956
   },
-  "validation": {
-    "phases_completed": [
-      "Data Parity Check",
-      "GNN Diagnostic",
-      "Temporal Validation",
-      "Hyperparameter Optimization",
-      "SHAP Interpretability",
-      "Robustness Testing"
-    ],
-    "key_findings": [
-      "GNN benchmark shows severe underfitting",
-      "Tabular models significantly outperform graph-based approach",
-      "LightGBM shows best robustness across scenarios",
-      "XGBoost most sensitive to data noise"
-    ]
+  "hyperparameters": {
+    "n_estimators": 760,
+    "learning_rate": 0.09953644061600488,
+    "max_depth": 12,
+    "subsample": 0.8374513696099152,
+    "colsample_bytree": 0.9487908803055531,
+    "reg_alpha": 0.11098793316786999,
+    "reg_lambda": 4.9478218218206615,
+    "scale_pos_weight": 1200.9727810650888,
+    "objective": "binary:logistic",
+    "eval_metric": "aucpr",
+    "tree_method": "hist",
+    "seed": 42
   },
-  "ethical_considerations": {
-    "bias_analysis": "SHAP analysis shows fair feature importance distribution",
-    "fairness_metrics": "No significant bias detected in protected attributes",
-    "privacy_impact": "Uses aggregated transaction data only",
-    "potential_misuse": "Financial fraud detection system"
+  "performance_test_set": {
+    "primary_metric": "PR-AUC",
+    "why_pr_auc": "A classe positiva é rara (0,18% do teste). A ROC-AUC fica alta mesmo quando a maioria dos alertas é falsa; a PR-AUC mede quantos dos casos marcados são positivos de verdade, em cada nível de cobertura. Um modelo que chuta ao acaso tem PR-AUC perto de 0,0018.",
+    "pr_auc": 0.38884520015606666,
+    "roc_auc": 0.9529073183029011,
+    "precision_at_100": 0.98,
+    "precision_at_500": 0.84,
+    "precision_at_1000": 0.606,
+    "recall_at_5pct_fpr": 0.8102392877017252
   },
-  "limitations": {
-    "data_drift": "Model may require retraining with concept drift",
-    "adversarial_attacks": "Vulnerable to sophisticated feature manipulation",
-    "computational_cost": "Ensemble approach increases inference time",
-    "interpretability": "Black-box nature of ensemble methods"
+  "other_artifacts_not_used": {
+    "artifacts/final_evaluation_results.json": "Avaliação de outro XGBoost (n_estimators=200) no mesmo teste: PR-AUC 0,219, ROC-AUC 0,956. As previsões desse modelo não foram salvas e o notebook que gerou o arquivo não está no repositório, então os números não podem ser recalculados.",
+    "previous_model_card": "A versão anterior deste arquivo dizia PR-AUC = 0,5093 (max_depth=6) e descrevia um ensemble. O valor não aparece em nenhum outro artefato e foi removido.",
+    "artifacts/calibration_results.json": "XGBoost calibrado (isotônico), avaliado em 812.535 transações (artifacts/calibrated_predictions.csv), não no teste completo.",
+    "artifacts/gnn_comparison_results.json": "Reprodução própria da arquitetura Multi-GNN (GIN) publicada pela IBM, com F1 = 0,0012. Essa reprodução não funcionou e não serve de referência de comparação.",
+    "models/multignn/outputs/final_metrics.json": "Outra rodada de GNN, com PR-AUC 0,747 em 4.572 nós do grafo. A unidade avaliada (nó) e o conjunto de teste são diferentes do XGBoost (transações), então os números não são comparáveis."
   },
-  "recommendations": {
-    "deployment": [
-      "Implement continuous monitoring",
-      "Set up automated retraining pipelines",
-      "Configure performance degradation alerts",
-      "Use ensemble for production inference"
-    ],
-    "maintenance": [
-      "Monthly performance validation",
-      "Quarterly model retraining",
-      "Continuous data quality monitoring",
-      "Regular adversarial testing"
-    ]
-  }
+  "limitations": [
+    "Uma única divisão temporal de teste; não há medição em produção.",
+    "A base é sintética. O desempenho em dados reais não foi medido.",
+    "A precisão cai com o volume de alertas: 0,98 nos 100 primeiros, 0,84 nos 500, 0,606 nos 1.000."
+  ]
 }

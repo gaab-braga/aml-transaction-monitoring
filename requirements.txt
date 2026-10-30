@@ -35,6 +35,7 @@ networkx>=3.2.0               # Graph algorithms
 pyyaml>=6.0.1                 # Configuration files
 tqdm>=4.66.0                  # Progress bars
 schedule>=1.2.0               # Job scheduling
+structlog>=24.1.0             # Structured logging (src/utils/logging.py)
 
 # === DEVELOPMENT ===
 jupyter>=1.0.0                # Notebook environment
