@@ -1,88 +1,59 @@
 {
   "model_overview": {
-    "name": "AML Detection System",
-    "version": "2.0",
-    "type": "Ensemble Classification Model",
-    "task": "Anti-Money Laundering Detection",
-    "dataset": "HI-Small (5M+ transactions)",
-    "frameworks": [
-      "XGBoost",
-      "LightGBM",
-      "RandomForest",
-      "Scikit-learn"
-    ],
-    "license": "Proprietary"
+    "name": "AML Detection - XGBoost",
+    "version": "2.1",
+    "type": "Classificador binário XGBoost (modelo único)",
+    "task": "Marcar transações com suspeita de lavagem de dinheiro",
+    "dataset": "IBM AML HI-Small, 5.078.336 transações (dados sintéticos)",
+    "license": "Apache-2.0"
   },
-  "model_details": {
-    "input_format": "Tabular data with 15+ engineered features",
-    "output_format": "Probability score [0,1] for fraud likelihood",
-    "model_architecture": {
-      "XGBoost": "Gradient boosting with optimized hyperparameters",
-      "LightGBM": "Light gradient boosting with early stopping",
-      "RandomForest": "Ensemble of 100 decision trees",
-      "Ensemble": "Voting classifier combining all three models"
-    },
-    "hyperparameters": {
-      "XGBoost": "max_depth=6, learning_rate=0.1, n_estimators=200",
-      "LightGBM": "num_leaves=31, learning_rate=0.1, n_estimators=150",
-      "RandomForest": "n_estimators=100, max_depth=10",
-      "Ensemble": "Voting classifier with soft voting"
+  "source_of_truth": {
+    "file": "artifacts/final_evaluation_results.json",
+    "rule": "Todos os números deste model card e do README vêm desse arquivo. Se outro artefato mostrar um número diferente, vale este."
+  },
+  "data_split": {
+    "method": "temporal_80_20",
+    "description": "As transações mais antigas (80%) treinam o modelo; as mais recentes (20%) ficam para o teste.",
+    "train_size": 4062668,
+    "test_size": 1015668
+  },
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 10,
+    "learning_rate": 0.1205712628744377,
+    "subsample": 0.8394633936788146,
+    "colsample_bytree": 0.6624074561769746,
+    "min_child_weight": 2,
+    "gamma": 0.2904180608409973,
+    "reg_alpha": 0.8661761457749352,
+    "reg_lambda": 0.6011150117432088,
+    "random_state": 42,
+    "eval_metric": "auc"
+  },
+  "performance_test_set": {
+    "primary_metric": "PR-AUC",
+    "why_pr_auc": "A classe positiva é rara (0,10% das transações da base inteira, artifacts/sampling_report.json). A ROC-AUC fica alta mesmo quando a maioria dos alertas é falsa; a PR-AUC mede quantos dos casos marcados são positivos de verdade, em cada nível de cobertura.",
+    "pr_auc": 0.2187070592988425,
+    "roc_auc": 0.9555518323193086,
+    "precision_at_100": 0.86,
+    "precision_at_500": 0.46,
+    "recall_at_5pct_fpr": 0.8006230529595015,
+    "calibration": {
+      "method": "isotonic",
+      "ece": 0.00013187245229642712,
+      "brier": 0.0010905917524055078
     }
   },
-  "performance": {
-    "primary_metric": "PR-AUC (Precision-Recall Area Under Curve)",
-    "benchmark_comparison": {
-      "XGBoost": "PR-AUC = 0.5093 (vs GNN F1 = 0.0012)",
-      "LightGBM": "PR-AUC = 0.2028",
-      "RandomForest": "PR-AUC = 0.0709",
-      "Ensemble": "PR-AUC = 0.3060"
-    },
-    "robustness": {
-      "most_robust_model": "LightGBM",
-      "vulnerabilities_identified": 12,
-      "adversarial_resistance": "Medium (RandomForest most vulnerable)"
-    }
+  "other_artifacts_not_used": {
+    "previous_model_card": "A versão anterior deste arquivo dizia PR-AUC = 0,5093 para o XGBoost (max_depth=6). Esse número não aparece em nenhum outro artefato do repositório e foi removido.",
+    "artifacts/competition_results.json": "XGBoost com PR-AUC 0,389 e outros hiperparâmetros (n_estimators=760). É uma rodada de comparação de modelos, não a avaliação final.",
+    "artifacts/calibration_results.json": "XGBoost calibrado com PR-AUC 0,369. Rodada anterior, não a avaliação final.",
+    "artifacts/gnn_comparison_results.json": "Reprodução própria da arquitetura Multi-GNN (GIN) publicada pela IBM, com F1 = 0,0012. Essa reprodução não funcionou e não serve de referência de comparação.",
+    "models/multignn/outputs/final_metrics.json": "Outra rodada de GNN, com PR-AUC 0,747 em 4.572 nós do grafo. A unidade avaliada (nó) e o conjunto de teste são diferentes do XGBoost (transações), então os números não são comparáveis."
   },
-  "validation": {
-    "phases_completed": [
-      "Data Parity Check",
-      "GNN Diagnostic",
-      "Temporal Validation",
-      "Hyperparameter Optimization",
-      "SHAP Interpretability",
-      "Robustness Testing"
-    ],
-    "key_findings": [
-      "GNN benchmark shows severe underfitting",
-      "Tabular models significantly outperform graph-based approach",
-      "LightGBM shows best robustness across scenarios",
-      "XGBoost most sensitive to data noise"
-    ]
-  },
-  "ethical_considerations": {
-    "bias_analysis": "SHAP analysis shows fair feature importance distribution",
-    "fairness_metrics": "No significant bias detected in protected attributes",
-    "privacy_impact": "Uses aggregated transaction data only",
-    "potential_misuse": "Financial fraud detection system"
-  },
-  "limitations": {
-    "data_drift": "Model may require retraining with concept drift",
-    "adversarial_attacks": "Vulnerable to sophisticated feature manipulation",
-    "computational_cost": "Ensemble approach increases inference time",
-    "interpretability": "Black-box nature of ensemble methods"
-  },
-  "recommendations": {
-    "deployment": [
-      "Implement continuous monitoring",
-      "Set up automated retraining pipelines",
-      "Configure performance degradation alerts",
-      "Use ensemble for production inference"
-    ],
-    "maintenance": [
-      "Monthly performance validation",
-      "Quarterly model retraining",
-      "Continuous data quality monitoring",
-      "Regular adversarial testing"
-    ]
-  }
+  "limitations": [
+    "O modelo foi avaliado em uma única divisão temporal; não há medição em produção.",
+    "A base é sintética. O desempenho em dados reais não foi medido.",
+    "Precisão nos 100 casos de maior score = 0,86, mas cai para 0,46 nos 500 primeiros."
+  ]
 }
