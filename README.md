@@ -1,7 +1,7 @@
-# AML-Ops-Engine: detecção de lavagem de dinheiro com XGBoost
+# aml-transaction-monitoring: detecção de lavagem de dinheiro com XGBoost
 
-[![Tests](https://github.com/gaab-braga/AML-Ops-Engine/actions/workflows/test.yml/badge.svg)](https://github.com/gaab-braga/AML-Ops-Engine/actions/workflows/test.yml)
-[![Docker Build](https://github.com/gaab-braga/AML-Ops-Engine/actions/workflows/docker.yml/badge.svg)](https://github.com/gaab-braga/AML-Ops-Engine/actions/workflows/docker.yml)
+[![Tests](https://github.com/gaab-braga/aml-transaction-monitoring/actions/workflows/test.yml/badge.svg)](https://github.com/gaab-braga/aml-transaction-monitoring/actions/workflows/test.yml)
+[![Docker Build](https://github.com/gaab-braga/aml-transaction-monitoring/actions/workflows/docker.yml/badge.svg)](https://github.com/gaab-braga/aml-transaction-monitoring/actions/workflows/docker.yml)
 
 Modelo que dá um score de risco para cada transação bancária e marca as que parecem lavagem de dinheiro. O projeto começou em notebooks e depois virou código em `src/`, com API, linha de comando, testes e imagem Docker.
 
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8000/predict \
 Os dados brutos (`data/`) estão no Git LFS. Para clonar sem baixá-los:
 
 ```bash
-GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/gaab-braga/AML-Ops-Engine.git
+GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/gaab-braga/aml-transaction-monitoring.git
 ```
 
 ## Limitações
