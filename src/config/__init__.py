@@ -1,6 +1,8 @@
 # Configuration module
 # Handles unified configuration management with Pydantic
 
+# Configuração do pipeline (YAML), usada por src/data, src/features, src/models e entrypoints
+from .pipeline import Config, config
 from .settings import AMLSettings, settings, load_settings, save_settings, init_settings
 from .validation import (
     validate_config_file,
@@ -18,6 +20,10 @@ from .environments import (
 )
 
 __all__ = [
+    # Pipeline config (YAML)
+    "Config",
+    "config",
+
     # Main settings
     "AMLSettings",
     "settings",
