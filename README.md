@@ -9,19 +9,19 @@ A base é a IBM AML HI-Small (dados sintéticos): 5.078.336 transações, das qu
 
 ## Resultado
 
-Fonte de todos os números desta seção: [`artifacts/final_evaluation_results.json`](artifacts/final_evaluation_results.json). O [model card](artifacts/model_card.json) usa a mesma fonte.
+Os números abaixo vêm das previsões salvas em [`artifacts/tabular_predictions.csv`](artifacts/tabular_predictions.csv) e batem com o XGBoost de [`artifacts/competition_results.json`](artifacts/competition_results.json) (notebook 03). Qualquer pessoa pode recalcular com `scripts/recompute_metrics.py` (ver "Como rodar"). O [model card](artifacts/model_card.json) usa a mesma fonte.
 
-O teste é temporal: as transações mais antigas (4.062.668) treinam o modelo e as mais recentes (1.015.668) ficam para o teste.
+O teste é temporal: as transações mais antigas (4.062.668) treinam o modelo e as mais recentes (1.015.668) ficam para o teste. No teste há 1.797 transações de lavagem (0,18%).
 
 | Métrica no teste | Valor | O que quer dizer |
 |---|---|---|
-| **PR-AUC** | **0,219** | Métrica principal. Mede quantos alertas são lavagem de verdade em cada nível de cobertura. Um modelo que chuta ao acaso fica perto da taxa de positivos do teste, 0,18% (1.797 de 1.015.668, contado em `tabular_predictions.csv`). |
-| ROC-AUC | 0,956 | Mede se o modelo ordena bem positivos acima de negativos. Com classe tão rara, fica alta mesmo quando a maioria dos alertas é falsa, por isso não é a métrica principal. |
-| Precisão nos 100 maiores scores | 0,86 | Das 100 transações com score mais alto, 86 eram lavagem. |
-| Precisão nos 500 maiores scores | 0,46 | Nas 500 primeiras, 230 eram lavagem. |
-| Recall com 5% de falso positivo | 0,80 | Se a operação aceitar marcar 5% das transações legítimas, o modelo acha 80% da lavagem. No teste, 5% das legítimas são cerca de 50 mil alertas falsos. |
+| **PR-AUC** | **0,389** | Métrica principal. Mede quantos alertas são lavagem de verdade em cada nível de cobertura. Um modelo que chuta ao acaso fica perto de 0,0018, a taxa de positivos do teste. |
+| ROC-AUC | 0,953 | Mede se o modelo ordena bem positivos acima de negativos. Com classe tão rara, fica alta mesmo quando a maioria dos alertas é falsa, por isso não é a métrica principal. |
+| Precisão nos 100 maiores scores | 0,98 | Das 100 transações com score mais alto, 98 eram lavagem. |
+| Precisão nos 500 maiores scores | 0,84 | Nas 500 primeiras, 420 eram lavagem. |
+| Recall com 5% de falso positivo | 0,81 | Se a operação aceitar marcar 5% das transações legítimas, o modelo acha 81% da lavagem. No teste, 5% das legítimas são cerca de 50 mil alertas falsos. |
 
-A calibração isotônica deixou o score próximo de uma probabilidade (ECE 0,00013, Brier 0,0011, no mesmo arquivo).
+Modelo: XGBoost com `n_estimators=760`, `max_depth=12`, `scale_pos_weight` de cerca de 1.201 (hiperparâmetros completos no model card).
 
 ### Sobre a comparação com GNN
 
@@ -34,13 +34,13 @@ Por isso o projeto não traz comparação com GNN.
 
 ### Outros artefatos com números diferentes
 
-A pasta `artifacts/` guarda saídas de várias rodadas. Alguns arquivos mostram outros valores para o XGBoost, com outros hiperparâmetros:
+A pasta `artifacts/` guarda saídas de várias rodadas. Alguns arquivos mostram outros valores para o XGBoost:
 
 | Arquivo | PR-AUC | Situação |
 |---|---|---|
-| `final_evaluation_results.json` | 0,219 | Avaliação final. Fonte do README e do model card. |
-| `competition_results.json` | 0,389 | Competição de modelos (notebook 03). Bate com as previsões salvas em `tabular_predictions.csv`. |
-| `calibration_results.json` | 0,369 | Calibração (notebook 04), em 812.535 transações. |
+| `competition_results.json` | 0,389 | Fonte do README. Bate com as previsões salvas em `tabular_predictions.csv`. |
+| `final_evaluation_results.json` | 0,219 | Outro XGBoost (`n_estimators=200`) no mesmo teste. As previsões não foram salvas e o notebook que gerou o arquivo não está no repositório, então não dá para recalcular. |
+| `calibration_results.json` | 0,369 | XGBoost calibrado (notebook 04), avaliado em 812.535 transações, não no teste completo. |
 
 O model card antigo dizia PR-AUC = 0,509. Esse valor não aparece em nenhum outro artefato e foi removido.
 
@@ -52,6 +52,7 @@ src/           código do pipeline: dados, features, modelo, monitoramento
 notebooks/     01 EDA · 02 GNN · 03 competição de modelos · 04 calibração · 05 SHAP · 06 robustez · 07 resumo
 artifacts/     métricas, gráficos e previsões das rodadas
 benchmark/     código da reprodução Multi-GNN
+scripts/       recompute_metrics.py: recalcula as métricas do README
 tests/         testes com pytest
 ```
 
@@ -60,6 +61,13 @@ tests/         testes com pytest
 ```bash
 pip install -r requirements.txt
 pytest tests/
+```
+
+Recalcular as métricas do README a partir das previsões salvas:
+
+```bash
+git lfs pull --include="artifacts/tabular_predictions.csv"
+python scripts/recompute_metrics.py
 ```
 
 API com Docker:
@@ -82,8 +90,7 @@ GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/gaab-braga/AML-Ops-Engine.git
 
 - Uma única divisão temporal de teste. Não há medição em produção.
 - Base sintética. O desempenho em dados reais não foi medido.
-- A precisão cai rápido: 0,86 nos 100 primeiros alertas, 0,46 nos 500 primeiros.
-- O notebook que gerou `final_evaluation_results.json` não está no repositório, e as previsões desse modelo não foram salvas. Os números da tabela de resultado não podem ser recalculados a partir dos arquivos do repositório.
+- A precisão cai com o volume de alertas: 0,98 nos 100 primeiros, 0,84 nos 500, 0,606 nos 1.000 (`competition_results.json`).
 
 ## Licença
 

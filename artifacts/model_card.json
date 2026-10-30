@@ -8,52 +8,53 @@
     "license": "Apache-2.0"
   },
   "source_of_truth": {
-    "file": "artifacts/final_evaluation_results.json",
-    "rule": "Todos os números deste model card e do README vêm desse arquivo. Se outro artefato mostrar um número diferente, vale este."
+    "predictions": "artifacts/tabular_predictions.csv",
+    "metrics": "artifacts/competition_results.json (modelo XGBoost)",
+    "check": "python scripts/recompute_metrics.py recalcula as métricas a partir das previsões e compara com o JSON.",
+    "rule": "Todos os números deste model card e do README podem ser recalculados a partir das previsões salvas."
   },
   "data_split": {
-    "method": "temporal_80_20",
+    "method": "temporal 80/20",
     "description": "As transações mais antigas (80%) treinam o modelo; as mais recentes (20%) ficam para o teste.",
     "train_size": 4062668,
-    "test_size": 1015668
+    "test_size": 1015668,
+    "test_positives": 1797,
+    "test_positive_rate": 0.0017692789376055956
   },
   "hyperparameters": {
-    "n_estimators": 200,
-    "max_depth": 10,
-    "learning_rate": 0.1205712628744377,
-    "subsample": 0.8394633936788146,
-    "colsample_bytree": 0.6624074561769746,
-    "min_child_weight": 2,
-    "gamma": 0.2904180608409973,
-    "reg_alpha": 0.8661761457749352,
-    "reg_lambda": 0.6011150117432088,
-    "random_state": 42,
-    "eval_metric": "auc"
+    "n_estimators": 760,
+    "learning_rate": 0.09953644061600488,
+    "max_depth": 12,
+    "subsample": 0.8374513696099152,
+    "colsample_bytree": 0.9487908803055531,
+    "reg_alpha": 0.11098793316786999,
+    "reg_lambda": 4.9478218218206615,
+    "scale_pos_weight": 1200.9727810650888,
+    "objective": "binary:logistic",
+    "eval_metric": "aucpr",
+    "tree_method": "hist",
+    "seed": 42
   },
   "performance_test_set": {
     "primary_metric": "PR-AUC",
-    "why_pr_auc": "A classe positiva é rara (0,10% das transações da base inteira, artifacts/sampling_report.json). A ROC-AUC fica alta mesmo quando a maioria dos alertas é falsa; a PR-AUC mede quantos dos casos marcados são positivos de verdade, em cada nível de cobertura.",
-    "pr_auc": 0.2187070592988425,
-    "roc_auc": 0.9555518323193086,
-    "precision_at_100": 0.86,
-    "precision_at_500": 0.46,
-    "recall_at_5pct_fpr": 0.8006230529595015,
-    "calibration": {
-      "method": "isotonic",
-      "ece": 0.00013187245229642712,
-      "brier": 0.0010905917524055078
-    }
+    "why_pr_auc": "A classe positiva é rara (0,18% do teste). A ROC-AUC fica alta mesmo quando a maioria dos alertas é falsa; a PR-AUC mede quantos dos casos marcados são positivos de verdade, em cada nível de cobertura. Um modelo que chuta ao acaso tem PR-AUC perto de 0,0018.",
+    "pr_auc": 0.38884520015606666,
+    "roc_auc": 0.9529073183029011,
+    "precision_at_100": 0.98,
+    "precision_at_500": 0.84,
+    "precision_at_1000": 0.606,
+    "recall_at_5pct_fpr": 0.8102392877017252
   },
   "other_artifacts_not_used": {
-    "previous_model_card": "A versão anterior deste arquivo dizia PR-AUC = 0,5093 para o XGBoost (max_depth=6). Esse número não aparece em nenhum outro artefato do repositório e foi removido.",
-    "artifacts/competition_results.json": "XGBoost com PR-AUC 0,389 e outros hiperparâmetros (n_estimators=760). É uma rodada de comparação de modelos, não a avaliação final.",
-    "artifacts/calibration_results.json": "XGBoost calibrado com PR-AUC 0,369. Rodada anterior, não a avaliação final.",
+    "artifacts/final_evaluation_results.json": "Avaliação de outro XGBoost (n_estimators=200) no mesmo teste: PR-AUC 0,219, ROC-AUC 0,956. As previsões desse modelo não foram salvas e o notebook que gerou o arquivo não está no repositório, então os números não podem ser recalculados.",
+    "previous_model_card": "A versão anterior deste arquivo dizia PR-AUC = 0,5093 (max_depth=6) e descrevia um ensemble. O valor não aparece em nenhum outro artefato e foi removido.",
+    "artifacts/calibration_results.json": "XGBoost calibrado (isotônico), avaliado em 812.535 transações (artifacts/calibrated_predictions.csv), não no teste completo.",
     "artifacts/gnn_comparison_results.json": "Reprodução própria da arquitetura Multi-GNN (GIN) publicada pela IBM, com F1 = 0,0012. Essa reprodução não funcionou e não serve de referência de comparação.",
     "models/multignn/outputs/final_metrics.json": "Outra rodada de GNN, com PR-AUC 0,747 em 4.572 nós do grafo. A unidade avaliada (nó) e o conjunto de teste são diferentes do XGBoost (transações), então os números não são comparáveis."
   },
   "limitations": [
-    "O modelo foi avaliado em uma única divisão temporal; não há medição em produção.",
+    "Uma única divisão temporal de teste; não há medição em produção.",
     "A base é sintética. O desempenho em dados reais não foi medido.",
-    "Precisão nos 100 casos de maior score = 0,86, mas cai para 0,46 nos 500 primeiros."
+    "A precisão cai com o volume de alertas: 0,98 nos 100 primeiros, 0,84 nos 500, 0,606 nos 1.000."
   ]
 }
