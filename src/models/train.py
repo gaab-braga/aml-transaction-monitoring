@@ -37,7 +37,8 @@ def get_model(model_name: str = None):
         available = list(MODEL_REGISTRY.keys())
         raise ValueError(f"Model '{model_name}' not found. Available: {available}")
     
-    params = config.get('model.params', {})
+    # Os parâmetros do YAML são do modelo configurado em model.name; outro modelo usa os padrões
+    params = config.get('model.params', {}) if model_name == config.get('model.name') else {}
     logger.info(f"Instantiating {model_name} with params: {params}")
     
     return model_class(**params)

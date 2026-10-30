@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from sklearn.metrics import precision_recall_curve, auc
+from sklearn.metrics import precision_recall_curve, average_precision_score
 
 from src.utils.logger import setup_logger
 from src.config import config
@@ -40,7 +40,8 @@ class AMLMonitor:
         timestamp = datetime.now()
         
         precision, recall, _ = precision_recall_curve(y_true, y_pred_proba)
-        pr_auc = auc(recall, precision)
+        # average_precision_score: a regra do trapézio superestima a PR-AUC com classe rara
+        pr_auc = average_precision_score(y_true, y_pred_proba)
         
         f1_scores = 2 * precision * recall / (precision + recall + 1e-10)
         optimal_idx = np.argmax(f1_scores)
