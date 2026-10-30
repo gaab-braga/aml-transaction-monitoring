@@ -42,7 +42,7 @@ def test_temporal_split_chronological_order(sample_data):
     
     assert len(X_train) > 0, "Training set is empty"
     assert len(X_test) > 0, "Test set is empty"
-    assert len(X_train) + len(X_test) == len(sample_data) - 1, "Data loss in split"
+    assert len(X_train) + len(X_test) == len(sample_data), "Data loss in split"
 
 
 def test_temporal_split_ratio(sample_data):
